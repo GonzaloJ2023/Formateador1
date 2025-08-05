@@ -4,21 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Formateador de Documentos Word</title>
-    <!-- Carga de Tailwind CSS para un diseño responsive -->
+    <!-- Content-Security-Policy para permitir la carga de estilos y scripts de CDNs externos -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://cdn.tailwindcss.com https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline';">
+    
+    <!-- Carga de Tailwind CSS desde CDN para un diseño moderno y responsive -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Carga de la fuente Inter y Font Awesome para iconos -->
+    <!-- Carga de la fuente Inter de Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Carga de Font Awesome para iconos -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
     <style>
+        /* Estilos personalizados para la fuente y animaciones */
         body { font-family: 'Inter', sans-serif; }
+        @keyframes fillProgress { from { width: 0%; } to { width: var(--progress-width); } }
+        .progress-bar-fill { animation: fillProgress 0.5s ease-out forwards; }
         .html-preview-container {
-            background-color: #1f2937;
-            border: 1px solid #4b5563;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
+            background-color: #1f2937; /* bg-gray-800 */
+            border: 1px solid #4b5563; /* border-gray-600 */
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1.5rem; /* p-6 */
             max-height: 400px;
             overflow-y: auto;
-            white-space: pre-wrap;
+            white-space: pre-wrap; /* Mantiene saltos de línea y espacios */
+            font-family: 'Inter', sans-serif;
             color: #e5e7eb;
         }
         .html-preview-container p { margin-bottom: 0.5rem; }
@@ -117,18 +125,20 @@
                         class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-10 rounded-lg shadow-lg
                                transition duration-300 ease-in-out transform hover:scale-105"
                     >
-                        <i class="fas fa-download mr-2"></i> Descargar Documento
+                        <i class="fas fa-download mr-2"></i> Descargar Documento v1
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Script de JavaScript para la lógica del frontend -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // URL del backend de Python alojado en Render.
-            // ¡IMPORTANTE! Reemplaza esto con la URL de tu nuevo servicio en Render.
+            // URL del backend de Python alojado en Render
             const API_URL = 'https://formateador-de-web-app.onrender.com';
+
+            // Obtener referencias a los elementos del DOM
             const fileUpload = document.getElementById('file-upload');
             const fileLabel = document.getElementById('file-label');
             const formatTextarea = document.getElementById('format-text');
@@ -141,12 +151,14 @@
 
             let selectedFile = null;
 
+            // Manejador para cuando el usuario selecciona un archivo
             fileUpload.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (file && file.name.endsWith('.docx')) {
                     selectedFile = file;
                     fileLabel.innerHTML = `<span><i class="fas fa-check-circle mr-2"></i> ${file.name}</span>`;
                     updateStatus('Archivo seleccionado: ' + file.name, false);
+                    // Ocultar resultados anteriores
                     resultsArea.classList.add('hidden');
                 } else {
                     selectedFile = null;
@@ -155,13 +167,19 @@
                 }
             });
 
+            // Manejador del botón de procesamiento
             processButton.addEventListener('click', async () => {
                 if (!selectedFile) {
                     updateStatus('Por favor, primero selecciona un archivo de Word.', true);
                     return;
                 }
                 const formatText = formatTextarea.value.trim();
-                
+                if (!formatText) {
+                    updateStatus('Por favor, especifica qué quieres remover o cambiar.', true);
+                    return;
+                }
+
+                // Iniciar el estado de procesamiento
                 updateStatus('Procesando documento...', false);
                 processButton.disabled = true;
                 processButton.classList.add('bg-gray-600', 'cursor-not-allowed');
@@ -173,26 +191,20 @@
                     formData.append('file', selectedFile);
                     formData.append('format_text', formatText);
 
-                    // Reintento con retroceso exponencial
-                    let response;
-                    for (let i = 0; i < 3; i++) {
-                        try {
-                            response = await fetch(`${API_URL}/process-document`, {
-                                method: 'POST',
-                                body: formData,
-                            });
-                            if (response.ok) break;
-                        } catch (e) {
-                            if (i < 2) await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
-                            else throw e;
-                        }
-                    }
-                    if (!response || !response.ok) {
+                    // Llamada al backend
+                    const response = await fetch(`${API_URL}/process-document`, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
                         const errorData = await response.json();
                         throw new Error(errorData.error || 'Error desconocido al procesar el documento.');
                     }
 
                     const result = await response.json();
+                    
+                    // Mostrar los resultados
                     htmlPreview.innerHTML = result.html_content;
                     docxBase64Textarea.value = result.docx_base64;
                     resultsArea.classList.remove('hidden');
@@ -203,6 +215,7 @@
                     console.error('Error durante el procesamiento:', error);
                     updateStatus(`Error al procesar el documento: ${error.message}.`, true);
                 } finally {
+                    // Restaurar el estado del botón
                     processButton.disabled = false;
                     processButton.classList.remove('bg-gray-600', 'cursor-not-allowed');
                     processButton.classList.add('bg-green-600', 'hover:bg-green-700');
@@ -210,6 +223,7 @@
                 }
             });
 
+            // Manejador del botón de descarga
             downloadButton.addEventListener('click', () => {
                 if (!docxBase64Textarea.value) {
                     updateStatus('No hay un documento para descargar.', true);
@@ -222,7 +236,7 @@
 
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = selectedFile.name.replace('.docx', '_procesado.docx');
+                    link.download = selectedFile.name.replace('.docx', '_v1.docx');
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -234,6 +248,7 @@
                 }
             });
 
+            // Función para mostrar mensajes de estado
             function updateStatus(message, isError) {
                 const messageElement = document.createElement('p');
                 messageElement.className = `mt-8 p-4 rounded-lg text-center font-medium ${isError ? 'bg-red-900 text-red-300' : 'bg-blue-900 text-blue-300'}`;
