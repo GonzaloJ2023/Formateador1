@@ -3,334 +3,410 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formateador de Documentos Word</title>
-    
-    <!-- Estilos de Tailwind CSS y personalizados incluidos directamente -->
+    <title>Procesador de Documentos Word</title>
+    <!--
+    * Este código no depende de archivos externos para garantizar que la interfaz
+    * siempre se muestre correctamente en cualquier servidor de despliegue.
+    -->
     <style>
-        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .fa-spinner { animation: spin 1s linear infinite; }
-        .bg-gray-900 { background-color: #111827; }
-        .text-white { color: #ffffff; }
-        .p-4 { padding: 1rem; }
-        .flex { display: flex; }
-        .items-center { align-items: center; }
-        .justify-center { justify-content: center; }
-        .font-sans { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; }
-        .min-h-screen { min-height: 100vh; }
-        .bg-gray-800 { background-color: #1f2937; }
-        .p-8 { padding: 2rem; }
-        .md\:p-12 { padding: 3rem; }
-        .rounded-2xl { border-radius: 1rem; }
-        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
-        .w-full { width: 100%; }
-        .max-w-3xl { max-width: 48rem; }
-        .border { border-width: 1px; }
-        .border-gray-700 { border-color: #374151; }
-        .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
-        .md\:text-5xl { font-size: 3rem; line-height: 1; }
-        .font-extrabold { font-weight: 800; }
-        .text-center { text-align: center; }
-        .mb-4 { margin-bottom: 1rem; }
-        .fa-file-word { color: #3b82f6; }
-        .mr-3 { margin-right: 0.75rem; }
-        .text-blue-400 { color: #60a5fa; }
-        .text-gray-400 { color: #9ca3af; }
-        .mb-10 { margin-bottom: 2.5rem; }
-        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
-        .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 2rem; }
-        .bg-gray-700 { background-color: #374151; }
-        .p-6 { padding: 1.5rem; }
-        .rounded-xl { border-radius: 0.75rem; }
-        .border-t-4 { border-top-width: 4px; }
-        .border-blue-500 { border-color: #3b82f6; }
-        .block { display: block; }
-        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-        .font-semibold { font-weight: 600; }
-        .text-gray-200 { color: #e5e7eb; }
-        .mb-2 { margin-bottom: 0.5rem; }
+        /* Estilos generales */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+            color: #e5e7eb; /* text-gray-100 */
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background-color: #1f2937; /* bg-gray-800 */
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            max-width: 48rem;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        /* Estilos para el encabezado */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffffff;
+            text-align: center;
+        }
+        .header svg {
+            width: 2.5rem;
+            height: 2.5rem;
+            color: #3b82f6; /* text-blue-500 */
+        }
+        /* Estilos para la sección de subida de archivo */
+        .upload-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
         .file-input-label {
-            background-color: #4f46e5;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            background-color: #3b82f6; /* bg-blue-500 */
             color: white;
+            font-weight: 600;
             cursor: pointer;
+            border-radius: 0.5rem;
             transition: background-color 0.3s;
         }
         .file-input-label:hover {
-            background-color: #4338ca;
+            background-color: #2563eb; /* bg-blue-600 */
         }
-        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-        .rounded-lg { border-radius: 0.5rem; }
-        .font-bold { font-weight: 700; }
-        .fa-upload { margin-right: 0.5rem; }
-        .hidden { display: none; }
-        .border-purple-500 { border-color: #8b5cf6; }
-        .bg-gray-800 { background-color: #1f2937; }
-        .text-gray-200 { color: #e5e7eb; }
-        .resize-y { resize: vertical; }
-        .transition { transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
-        .duration-200 { transition-duration: 200ms; }
-        .ease-in-out { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
-        .outline-none { outline: 2px solid transparent; outline-offset: 2px; }
-        .focus\:ring-2:focus { outline-color: currentColor; outline-offset: 2px; }
-        .focus\:ring-purple-500:focus { border-color: #8b5cf6; }
-        .text-xs { font-size: 0.75rem; line-height: 1rem; }
-        .bg-green-600 { background-color: #059669; }
-        .hover\:bg-green-700:hover { background-color: #047857; }
-        .transform { transform: var(--tw-transform); }
-        .hover\:scale-105:hover { transform: scale(1.05); }
-        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
-        .duration-300 { transition-duration: 300ms; }
-        .text-blue-500 { color: #3b82f6; }
-        .bg-gray-600 { background-color: #4b5563; }
-        .cursor-not-allowed { cursor: not-allowed; }
-        .mt-8 { margin-top: 2rem; }
-        .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.5rem; }
-        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
-        .fa-eye { color: #facc15; }
-        .text-yellow-400 { color: #facc15; }
+        .file-input {
+            display: none;
+        }
+        #file-name {
+            font-style: italic;
+            color: #9ca3af; /* text-gray-400 */
+        }
+        /* Estilos para el área de texto */
+        .textarea-section {
+            width: 100%;
+        }
+        .textarea-section label {
+            display: block;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .textarea-section textarea {
+            width: 100%;
+            padding: 1rem;
+            background-color: #374151; /* bg-gray-700 */
+            border-radius: 0.5rem;
+            color: #e5e7eb;
+            outline: none;
+            resize: vertical;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .textarea-section textarea:focus {
+            border-color: #3b82f6;
+        }
+        /* Estilos para el botón de procesamiento */
+        .process-button {
+            width: 100%;
+            max-width: 50%;
+            padding: 1rem;
+            background-color: #10b981; /* bg-green-500 */
+            color: white;
+            font-weight: bold;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .process-button:hover {
+            background-color: #059669; /* bg-green-600 */
+            transform: scale(1.05);
+        }
+        .process-button:active {
+            transform: scale(0.95);
+        }
+        .process-button[disabled] {
+            background-color: #4b5563; /* bg-gray-600 */
+            cursor: not-allowed;
+            transform: none;
+        }
+        /* Estilos para el área de estado */
+        .status-area {
+            width: 100%;
+            text-align: center;
+            display: none;
+        }
+        .status-message {
+            font-size: 1.125rem;
+            font-weight: 500;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .status-message.error {
+            background-color: #b91c1c; /* bg-red-700 */
+            color: #fca5a5; /* text-red-200 */
+        }
+        .status-message.success {
+            background-color: #065f46; /* bg-green-700 */
+            color: #a7f3d0; /* text-green-200 */
+        }
+        /* Estilos para el área de resultados */
+        .results-area {
+            width: 100%;
+            display: none;
+            gap: 1.5rem;
+            flex-direction: column;
+        }
+        .results-area h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
         .html-preview-container {
             background-color: #1f2937;
-            border: 1px solid #4b5563;
-            border-radius: 0.75rem;
+            border-radius: 0.5rem;
             padding: 1.5rem;
-            max-height: 400px;
+            max-height: 50vh;
             overflow-y: auto;
             white-space: pre-wrap;
-            color: #e5e7eb;
+            line-height: 1.5;
         }
-        .html-preview-container p { margin-bottom: 0.5rem; }
-        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-        .mb-3 { margin-bottom: 0.75rem; }
-        .bg-red-900 { background-color: #450a0a; }
-        .text-red-300 { color: #fca5a5; }
-        .bg-blue-900 { background-color: #1e3a8a; }
-        .text-blue-300 { color: #93c5fd; }
-        .bg-purple-600 { background-color: #9333ea; }
-        .hover\:bg-purple-700:hover { background-color: #7e22ce; }
-        .px-10 { padding-left: 2.5rem; padding-right: 2.5rem; }
+        .download-button {
+            padding: 1rem 2.5rem;
+            background-color: #3b82f6;
+            color: white;
+            font-weight: bold;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .download-button:hover {
+            background-color: #2563eb;
+            transform: scale(1.05);
+        }
+        .download-button:active {
+            transform: scale(0.95);
+        }
+        /* Iconos SVG */
+        .icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-right: 0.5rem;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .icon-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
-    <!-- Carga de la fuente Inter de Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <!-- Carga de Font Awesome para iconos -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
 </head>
-<body class="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center font-sans">
-    
-    <div class="bg-gray-800 p-8 md:p-12 rounded-2xl shadow-lg w-full max-w-3xl border border-gray-700">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-center text-white mb-4">
-            <i class="fas fa-file-word text-blue-500 mr-3"></i>
-            <span class="text-blue-400">Formateador</span> de Word
-        </h1>
-        <p class="text-center text-gray-400 mb-10 text-lg">
-            Sube un documento y describe los cambios de formato que deseas.
+<body>
+    <div class="container">
+        <div class="header">
+            <!-- Icono de archivo de Word -->
+            <svg class="w-10 h-10 text-blue-500" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM12 11V13H8V11H12ZM16 15V17H8V15H16Z"/>
+            </svg>
+            <h1>Procesador de Documentos Word</h1>
+        </div>
+        <p class="text-center italic" style="color: #9ca3af;">
+            Sube un documento y describe los cambios que deseas.
         </p>
 
-        <div class="space-y-8">
-            <!-- Sección para subir archivo -->
-            <div class="bg-gray-700 p-6 rounded-xl border-t-4 border-blue-500">
-                <label for="file-upload" class="block text-xl font-semibold text-gray-200 mb-4">
-                    1. Sube tu archivo Word (.docx)
-                </label>
-                <label id="file-label" class="file-input-label block w-full py-4 px-6 rounded-lg text-lg font-bold text-center">
-                    <input id="file-upload" type="file" accept=".docx" class="hidden" />
-                    <span><i class="fas fa-upload mr-2"></i> Elegir Archivo</span>
-                </label>
-            </div>
-
-            <!-- Sección para describir formato -->
-            <div class="bg-gray-700 p-6 rounded-xl border-t-4 border-purple-500">
-                <label for="format-text" class="block text-xl font-semibold text-gray-200 mb-4">
-                    2. Describe qué quieres remover o cambiar
-                </label>
-                <textarea
-                    id="format-text"
-                    rows="4"
-                    placeholder="Ejemplo: Eliminar líneas que contengan 'Confidencial', cambiar el tamaño de fuente a 12 en todo el documento."
-                    class="w-full p-4 border border-gray-600 rounded-lg bg-gray-800 text-gray-200
-                           focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none
-                           transition duration-200 ease-in-out resize-y"
-                ></textarea>
-            </div>
-
-            <!-- Botón de procesamiento -->
-            <button
-                id="process-button"
-                class="w-full py-4 px-6 rounded-lg text-white font-bold text-xl transition duration-300 ease-in-out transform hover:scale-105
-                       bg-green-600 hover:bg-green-700 shadow-lg"
-            >
-                <span><i class="fas fa-magic mr-2"></i> Procesar Documento</span>
-            </button>
+        <!-- Sección de subida de archivo -->
+        <div class="upload-section">
+            <label for="file-upload" class="file-input-label">
+                <!-- Icono de subida de archivo -->
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Elegir Archivo .docx
+            </label>
+            <input id="file-upload" type="file" class="file-input" accept=".docx">
+            <span id="file-name">Ningún archivo seleccionado</span>
         </div>
 
-        <!-- Sección de mensajes y progreso -->
-        <div id="status-area"></div>
+        <!-- Área de texto para la descripción del formato -->
+        <div class="textarea-section">
+            <label for="format-text">Ingresa el texto a remover (opcional):</label>
+            <textarea id="format-text" rows="3" placeholder="Ej: Escribe 'Confidencial' para remover todos los párrafos que contengan esa palabra."></textarea>
+        </div>
 
-        <!-- Previsualización y descarga -->
-        <div id="results-area" class="mt-8 space-y-6 hidden">
-            <h2 class="text-2xl font-bold text-white mb-4">
-                <i class="fas fa-eye text-yellow-400 mr-2"></i> Resultados
-            </h2>
+        <!-- Botón de procesamiento -->
+        <button id="process-button" class="process-button">
+            <!-- Icono de varita mágica -->
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 2L14 9l-7 7-5 5L2 19l5-5 7-7 7-7z"></path>
+            </svg>
+            Procesar Documento
+        </button>
 
-            <!-- Previsualización HTML -->
+        <!-- Área de estado y resultados (inicialmente oculta) -->
+        <div id="status-area" class="status-area">
+            <p id="status-message" class="status-message">
+                <svg class="icon icon-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v4"></path>
+                    <path d="M12 18v4"></path>
+                    <path d="M4.93 4.93l2.83 2.83"></path>
+                    <path d="M16.24 16.24l2.83 2.83"></path>
+                    <path d="M2 12h4"></path>
+                    <path d="M18 12h4"></path>
+                    <path d="M4.93 19.07l2.83-2.83"></path>
+                    <path d="M16.24 7.76l2.83-2.83"></path>
+                </svg>
+                Procesando, por favor espera...
+            </p>
+        </div>
+
+        <div id="results-area" class="results-area">
+            <!-- Sección de previsualización -->
             <div>
-                <h3 class="text-xl font-semibold text-gray-200 mb-2">Previsualización del Documento:</h3>
-                <div id="html-preview" class="html-preview-container"></div>
-            </div>
-
-            <!-- Contenido Base64 y descarga -->
-            <div>
-                <h3 class-xl font-semibold text-gray-200 mb-2">Contenido Base64 del Documento:</h3>
-                <p class="text-gray-400 text-sm mb-3">
-                    Esta es la representación de tu documento. Si esta cadena es larga, el servidor lo procesó correctamente.
-                </p>
-                <textarea
-                    id="docx-base64"
-                    readOnly
-                    rows="5"
-                    class="w-full p-4 border border-gray-600 rounded-lg bg-gray-800 text-gray-200 text-xs
-                           outline-none resize-y"
-                    placeholder="El contenido Base64 del documento aparecerá aquí..."
-                ></textarea>
-
-                <div class="mt-4 text-center">
-                    <button
-                        id="download-button"
-                        class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-10 rounded-lg shadow-lg
-                               transition duration-300 ease-in-out transform hover:scale-105"
-                    >
-                        <i class="fas fa-download mr-2"></i> Descargar Documento v1
-                    </button>
+                <h2>Previsualización del Documento Procesado</h2>
+                <div id="html-preview" class="html-preview-container">
+                    <p class="italic" style="color: #9ca3af;">El contenido procesado aparecerá aquí...</p>
                 </div>
             </div>
+
+            <!-- Sección de descarga -->
+            <div style="display: flex; justify-content: center;">
+                <button id="download-button" class="download-button">
+                    <!-- Icono de descarga -->
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Descargar Documento Procesado
+                </button>
+            </div>
+            
+            <!-- Área oculta para almacenar el Base64 -->
+            <textarea id="docx-base64" style="display: none;"></textarea>
         </div>
     </div>
 
     <!-- Script de JavaScript para la lógica del frontend -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // URL del backend de Python alojado en Render
-            const API_URL = 'https://formateador-de-web-app.onrender.com';
-
-            // Obtener referencias a los elementos del DOM
+            // Referencias a los elementos del DOM
             const fileUpload = document.getElementById('file-upload');
-            const fileLabel = document.getElementById('file-label');
+            const fileNameSpan = document.getElementById('file-name');
             const formatTextarea = document.getElementById('format-text');
             const processButton = document.getElementById('process-button');
             const statusArea = document.getElementById('status-area');
+            const statusMessage = document.getElementById('status-message');
             const resultsArea = document.getElementById('results-area');
             const htmlPreview = document.getElementById('html-preview');
-            const docxBase64Textarea = document.getElementById('docx-base64');
             const downloadButton = document.getElementById('download-button');
+            const docxBase64Textarea = document.getElementById('docx-base64');
 
-            let selectedFile = null;
+            // URL del backend en Render
+            const API_URL = 'https://formateador-de-web-app.onrender.com/process-document';
+            let uploadedFile = null;
 
-            // Manejador para cuando el usuario selecciona un archivo
+            // Maneja el cambio del input de archivo
             fileUpload.addEventListener('change', (event) => {
                 const file = event.target.files[0];
-                if (file && file.name.endsWith('.docx')) {
-                    selectedFile = file;
-                    fileLabel.innerHTML = `<span><i class="fas fa-check-circle mr-2"></i> ${file.name}</span>`;
-                    updateStatus('Archivo seleccionado: ' + file.name, false);
-                    // Ocultar resultados anteriores
-                    resultsArea.classList.add('hidden');
+                if (file) {
+                    if (file.name.endsWith('.docx')) {
+                        uploadedFile = file;
+                        fileNameSpan.textContent = file.name;
+                        resultsArea.style.display = 'none';
+                        statusArea.style.display = 'none';
+                    } else {
+                        uploadedFile = null;
+                        fileNameSpan.textContent = 'Tipo de archivo no válido';
+                        showStatusMessage('Por favor, selecciona un archivo .docx', true);
+                    }
                 } else {
-                    selectedFile = null;
-                    fileLabel.innerHTML = `<span><i class="fas fa-upload mr-2"></i> Elegir Archivo</span>`;
-                    updateStatus('Por favor, selecciona un archivo .docx válido.', true);
+                    uploadedFile = null;
+                    fileNameSpan.textContent = 'Ningún archivo seleccionado';
                 }
             });
 
-            // Manejador del botón de procesamiento
+            // Maneja el clic en el botón de procesamiento
             processButton.addEventListener('click', async () => {
-                if (!selectedFile) {
-                    updateStatus('Por favor, primero selecciona un archivo de Word.', true);
-                    return;
-                }
-                const formatText = formatTextarea.value.trim();
-                if (!formatText) {
-                    updateStatus('Por favor, especifica qué quieres remover o cambiar.', true);
+                if (!uploadedFile) {
+                    showStatusMessage('Por favor, sube un archivo .docx primero.', true);
                     return;
                 }
 
-                // Iniciar el estado de procesamiento
-                updateStatus('Procesando documento...', false);
                 processButton.disabled = true;
-                processButton.classList.add('bg-gray-600', 'cursor-not-allowed');
-                processButton.classList.remove('bg-green-600', 'hover:bg-green-700');
-                processButton.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Procesando...`;
+                processButton.innerHTML = `<svg class="icon icon-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M4.93 4.93l2.83 2.83"></path><path d="M16.24 16.24l2.83 2.83"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><path d="M4.93 19.07l2.83-2.83"></path><path d="M16.24 7.76l2.83-2.83"></path></svg> Procesando...`;
+                showStatusMessage('Procesando, por favor espera...', false);
+                resultsArea.style.display = 'none';
+                
+                const formData = new FormData();
+                formData.append('file', uploadedFile);
+                formData.append('format_text', formatTextarea.value);
 
                 try {
-                    const formData = new FormData();
-                    formData.append('file', selectedFile);
-                    formData.append('format_text', formatText);
-
-                    // Llamada al backend
-                    const response = await fetch(`${API_URL}/process-document`, {
+                    const response = await fetch(API_URL, {
                         method: 'POST',
-                        body: formData,
+                        body: formData
                     });
 
                     if (!response.ok) {
                         const errorData = await response.json();
-                        throw new Error(errorData.error || 'Error desconocido al procesar el documento.');
+                        throw new Error(errorData.error || 'Error desconocido del servidor.');
                     }
 
                     const result = await response.json();
                     
-                    // Mostrar los resultados
                     htmlPreview.innerHTML = result.html_content;
                     docxBase64Textarea.value = result.docx_base64;
-                    resultsArea.classList.remove('hidden');
-
-                    updateStatus('Documento procesado exitosamente. Ahora puedes previsualizar y descargar.', false);
                     
+                    showStatusMessage('¡Procesamiento completado!', false, true);
+                    resultsArea.style.display = 'flex';
+
                 } catch (error) {
-                    console.error('Error durante el procesamiento:', error);
-                    updateStatus(`Error al procesar el documento: ${error.message}.`, true);
+                    showStatusMessage(`Error: ${error.message}`, true);
                 } finally {
-                    // Restaurar el estado del botón
                     processButton.disabled = false;
-                    processButton.classList.remove('bg-gray-600', 'cursor-not-allowed');
-                    processButton.classList.add('bg-green-600', 'hover:bg-green-700');
-                    processButton.innerHTML = `<span><i class="fas fa-magic mr-2"></i> Procesar Documento</span>`;
+                    processButton.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2L14 9l-7 7-5 5L2 19l5-5 7-7 7-7z"></path></svg> Procesar Documento`;
                 }
             });
 
-            // Manejador del botón de descarga
             downloadButton.addEventListener('click', () => {
-                if (!docxBase64Textarea.value) {
-                    updateStatus('No hay un documento para descargar.', true);
+                const docxBase64 = docxBase64Textarea.value;
+                if (!docxBase64) {
+                    showStatusMessage('No hay documento para descargar.', true);
                     return;
                 }
-                try {
-                    const docxBytes = Uint8Array.from(atob(docxBase64Textarea.value), c => c.charCodeAt(0));
-                    const blob = new Blob([docxBytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-                    const url = URL.createObjectURL(blob);
 
+                try {
+                    const byteCharacters = atob(docxBase64);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+
+                    const downloadUrl = URL.createObjectURL(blob);
                     const link = document.createElement('a');
-                    link.href = url;
-                    link.download = selectedFile.name.replace('.docx', '_v1.docx');
+                    link.href = downloadUrl;
+                    link.download = 'documento_corregido.docx';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-                    updateStatus('La descarga ha comenzado. ¡Revisa tu carpeta de descargas!', false);
+                    URL.revokeObjectURL(downloadUrl);
+                    showStatusMessage('¡Descarga iniciada! Revisa tu carpeta de descargas.', false, true);
                 } catch (error) {
-                    console.error('Error al descargar el archivo:', error);
-                    updateStatus('Error al descargar el archivo. Por favor, inténtalo de nuevo.', true);
+                    showStatusMessage(`Error al descargar el archivo: ${error.message}`, true);
                 }
             });
 
-            // Función para mostrar mensajes de estado
-            function updateStatus(message, isError) {
-                const messageElement = document.createElement('p');
-                messageElement.className = `mt-8 p-4 rounded-lg text-center font-medium ${isError ? 'bg-red-900 text-red-300' : 'bg-blue-900 text-blue-300'}`;
-                messageElement.textContent = message;
-                statusArea.innerHTML = '';
-                statusArea.appendChild(messageElement);
-            }
-        });
-    </script>
-</body>
-</html>
+            function showStatusMessage(message, isError = false, isSuccess = false) {
+                statusArea.style.display = 'block';
+                const statusElement = statusMessage.closest('.status-message');
+                statusElement.classList.remove('error', 'success');
+                if (isError) {
+                    statusElement.classList.add('error');
+                    statusMessage.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> ${message}`;
+                } else if (isSuccess) {
+                    statusElement.classList.add('success');
+                    statusMessage.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoi
