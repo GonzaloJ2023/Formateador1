@@ -1,412 +1,217 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Procesador de Documentos Word</title>
-    <!--
-    * Este código no depende de archivos externos para garantizar que la interfaz
-    * siempre se muestre correctamente en cualquier servidor de despliegue.
-    -->
-    <style>
-        /* Estilos generales */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #111827; /* bg-gray-900 */
-            color: #e5e7eb; /* text-gray-100 */
-            margin: 0;
-            padding: 2rem;
-            display: flex;
-            min-height: 100vh;
-            align-items: center;
-            justify-content: center;
-        }
-        .container {
-            background-color: #1f2937; /* bg-gray-800 */
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            max-width: 48rem;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2rem;
-        }
-        /* Estilos para el encabezado */
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #ffffff;
-            text-align: center;
-        }
-        .header svg {
-            width: 2.5rem;
-            height: 2.5rem;
-            color: #3b82f6; /* text-blue-500 */
-        }
-        /* Estilos para la sección de subida de archivo */
-        .upload-section {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-        }
-        .file-input-label {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.75rem 1.5rem;
-            background-color: #3b82f6; /* bg-blue-500 */
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 0.5rem;
-            transition: background-color 0.3s;
-        }
-        .file-input-label:hover {
-            background-color: #2563eb; /* bg-blue-600 */
-        }
-        .file-input {
-            display: none;
-        }
-        #file-name {
-            font-style: italic;
-            color: #9ca3af; /* text-gray-400 */
-        }
-        /* Estilos para el área de texto */
-        .textarea-section {
-            width: 100%;
-        }
-        .textarea-section label {
-            display: block;
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        .textarea-section textarea {
-            width: 100%;
-            padding: 1rem;
-            background-color: #374151; /* bg-gray-700 */
-            border-radius: 0.5rem;
-            color: #e5e7eb;
-            outline: none;
-            resize: vertical;
-            border: 2px solid transparent;
-            transition: border-color 0.2s;
-        }
-        .textarea-section textarea:focus {
-            border-color: #3b82f6;
-        }
-        /* Estilos para el botón de procesamiento */
-        .process-button {
-            width: 100%;
-            max-width: 50%;
-            padding: 1rem;
-            background-color: #10b981; /* bg-green-500 */
-            color: white;
-            font-weight: bold;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s, transform 0.3s;
-        }
-        .process-button:hover {
-            background-color: #059669; /* bg-green-600 */
-            transform: scale(1.05);
-        }
-        .process-button:active {
-            transform: scale(0.95);
-        }
-        .process-button[disabled] {
-            background-color: #4b5563; /* bg-gray-600 */
-            cursor: not-allowed;
-            transform: none;
-        }
-        /* Estilos para el área de estado */
-        .status-area {
-            width: 100%;
-            text-align: center;
-            display: none;
-        }
-        .status-message {
-            font-size: 1.125rem;
-            font-weight: 500;
-            padding: 1rem;
-            border-radius: 0.5rem;
-        }
-        .status-message.error {
-            background-color: #b91c1c; /* bg-red-700 */
-            color: #fca5a5; /* text-red-200 */
-        }
-        .status-message.success {
-            background-color: #065f46; /* bg-green-700 */
-            color: #a7f3d0; /* text-green-200 */
-        }
-        /* Estilos para el área de resultados */
-        .results-area {
-            width: 100%;
-            display: none;
-            gap: 1.5rem;
-            flex-direction: column;
-        }
-        .results-area h2 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-        }
-        .html-preview-container {
-            background-color: #1f2937;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-            max-height: 50vh;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            line-height: 1.5;
-        }
-        .download-button {
-            padding: 1rem 2.5rem;
-            background-color: #3b82f6;
-            color: white;
-            font-weight: bold;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s, transform 0.3s;
-        }
-        .download-button:hover {
-            background-color: #2563eb;
-            transform: scale(1.05);
-        }
-        .download-button:active {
-            transform: scale(0.95);
-        }
-        /* Iconos SVG */
-        .icon {
-            width: 1.5rem;
-            height: 1.5rem;
-            margin-right: 0.5rem;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        .icon-spinner {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <!-- Icono de archivo de Word -->
-            <svg class="w-10 h-10 text-blue-500" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM12 11V13H8V11H12ZM16 15V17H8V15H16Z"/>
-            </svg>
-            <h1>Procesador de Documentos Word</h1>
-        </div>
-        <p class="text-center italic" style="color: #9ca3af;">
-            Sube un documento y describe los cambios que deseas.
-        </p>
+import React, { useState } from 'react';
 
-        <!-- Sección de subida de archivo -->
-        <div class="upload-section">
-            <label for="file-upload" class="file-input-label">
-                <!-- Icono de subida de archivo -->
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-                Elegir Archivo .docx
-            </label>
-            <input id="file-upload" type="file" class="file-input" accept=".docx">
-            <span id="file-name">Ningún archivo seleccionado</span>
-        </div>
+const App = () => {
+    // Definimos el estado para manejar los archivos, mensajes y resultados.
+    const [uploadedFile, setUploadedFile] = useState(null);
+    const [formatText, setFormatText] = useState('');
+    const [statusMessage, setStatusMessage] = useState('');
+    const [isError, setIsError] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [htmlPreview, setHtmlPreview] = useState('');
+    const [docxBase64, setDocxBase64] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
 
-        <!-- Área de texto para la descripción del formato -->
-        <div class="textarea-section">
-            <label for="format-text">Ingresa el texto a remover (opcional):</label>
-            <textarea id="format-text" rows="3" placeholder="Ej: Escribe 'Confidencial' para remover todos los párrafos que contengan esa palabra."></textarea>
-        </div>
+    // URL del backend en Render
+    const API_URL = 'https://formateador-de-web-app.onrender.com/process-document';
 
-        <!-- Botón de procesamiento -->
-        <button id="process-button" class="process-button">
-            <!-- Icono de varita mágica -->
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 2L14 9l-7 7-5 5L2 19l5-5 7-7 7-7z"></path>
-            </svg>
-            Procesar Documento
-        </button>
+    // Maneja la selección del archivo.
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file && file.name.endsWith('.docx')) {
+            setUploadedFile(file);
+            setStatusMessage('');
+            setIsError(false);
+            setIsSuccess(false);
+            setHtmlPreview('');
+            setDocxBase64('');
+        } else {
+            setUploadedFile(null);
+            setStatusMessage('Por favor, selecciona un archivo .docx válido.');
+            setIsError(true);
+            setIsSuccess(false);
+        }
+    };
 
-        <!-- Área de estado y resultados (inicialmente oculta) -->
-        <div id="status-area" class="status-area">
-            <p id="status-message" class="status-message">
-                <svg class="icon icon-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2v4"></path>
-                    <path d="M12 18v4"></path>
-                    <path d="M4.93 4.93l2.83 2.83"></path>
-                    <path d="M16.24 16.24l2.83 2.83"></path>
-                    <path d="M2 12h4"></path>
-                    <path d="M18 12h4"></path>
-                    <path d="M4.93 19.07l2.83-2.83"></path>
-                    <path d="M16.24 7.76l2.83-2.83"></path>
-                </svg>
-                Procesando, por favor espera...
-            </p>
-        </div>
+    // Maneja el clic en el botón de procesamiento.
+    const handleProcessClick = async () => {
+        if (!uploadedFile) {
+            setStatusMessage('Por favor, sube un archivo .docx primero.');
+            setIsError(true);
+            return;
+        }
 
-        <div id="results-area" class="results-area">
-            <!-- Sección de previsualización -->
-            <div>
-                <h2>Previsualización del Documento Procesado</h2>
-                <div id="html-preview" class="html-preview-container">
-                    <p class="italic" style="color: #9ca3af;">El contenido procesado aparecerá aquí...</p>
-                </div>
-            </div>
+        setIsProcessing(true);
+        setStatusMessage('Procesando, por favor espera...');
+        setIsError(false);
+        setIsSuccess(false);
+        setHtmlPreview('');
+        setDocxBase64('');
 
-            <!-- Sección de descarga -->
-            <div style="display: flex; justify-content: center;">
-                <button id="download-button" class="download-button">
-                    <!-- Icono de descarga -->
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Descargar Documento Procesado
-                </button>
-            </div>
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+        formData.append('format_text', formatText);
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error desconocido del servidor.');
+            }
+
+            const result = await response.json();
             
-            <!-- Área oculta para almacenar el Base64 -->
-            <textarea id="docx-base64" style="display: none;"></textarea>
-        </div>
-    </div>
+            setHtmlPreview(result.html_content);
+            setDocxBase64(result.docx_base64);
+            setStatusMessage('¡Procesamiento completado!');
+            setIsSuccess(true);
+        } catch (error) {
+            setStatusMessage(`Error: ${error.message}`);
+            setIsError(true);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
-    <!-- Script de JavaScript para la lógica del frontend -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Referencias a los elementos del DOM
-            const fileUpload = document.getElementById('file-upload');
-            const fileNameSpan = document.getElementById('file-name');
-            const formatTextarea = document.getElementById('format-text');
-            const processButton = document.getElementById('process-button');
-            const statusArea = document.getElementById('status-area');
-            const statusMessage = document.getElementById('status-message');
-            const resultsArea = document.getElementById('results-area');
-            const htmlPreview = document.getElementById('html-preview');
-            const downloadButton = document.getElementById('download-button');
-            const docxBase64Textarea = document.getElementById('docx-base64');
+    // Maneja el clic en el botón de descarga.
+    const handleDownloadClick = () => {
+        if (!docxBase64) {
+            setStatusMessage('No hay documento para descargar.');
+            setIsError(true);
+            return;
+        }
 
-            // URL del backend en Render
-            const API_URL = 'https://formateador-de-web-app.onrender.com/process-document';
-            let uploadedFile = null;
+        try {
+            const byteCharacters = atob(docxBase64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 
-            // Maneja el cambio del input de archivo
-            fileUpload.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    if (file.name.endsWith('.docx')) {
-                        uploadedFile = file;
-                        fileNameSpan.textContent = file.name;
-                        resultsArea.style.display = 'none';
-                        statusArea.style.display = 'none';
-                    } else {
-                        uploadedFile = null;
-                        fileNameSpan.textContent = 'Tipo de archivo no válido';
-                        showStatusMessage('Por favor, selecciona un archivo .docx', true);
-                    }
-                } else {
-                    uploadedFile = null;
-                    fileNameSpan.textContent = 'Ningún archivo seleccionado';
-                }
-            });
+            const downloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = 'documento_corregido.docx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(downloadUrl);
+            setStatusMessage('¡Descarga iniciada! Revisa tu carpeta de descargas.');
+            setIsSuccess(true);
+        } catch (error) {
+            setStatusMessage(`Error al descargar el archivo: ${error.message}`);
+            setIsError(true);
+        }
+    };
 
-            // Maneja el clic en el botón de procesamiento
-            processButton.addEventListener('click', async () => {
-                if (!uploadedFile) {
-                    showStatusMessage('Por favor, sube un archivo .docx primero.', true);
-                    return;
-                }
+    return (
+        <div className="bg-gray-900 text-gray-100 p-8 min-h-screen flex items-center justify-center">
+            <script src="https://cdn.tailwindcss.com"></script>
+            <div className="bg-gray-800 p-8 rounded-xl shadow-2xl max-w-4xl w-full flex flex-col items-center space-y-8">
+                <div className="flex items-center space-x-4">
+                    <svg className="w-10 h-10 text-blue-500" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM12 11V13H8V11H12ZM16 15V17H8V15H16Z"/>
+                    </svg>
+                    <h1 className="text-4xl font-bold text-center">Procesador de Documentos Word</h1>
+                </div>
 
-                processButton.disabled = true;
-                processButton.innerHTML = `<svg class="icon icon-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M4.93 4.93l2.83 2.83"></path><path d="M16.24 16.24l2.83 2.83"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><path d="M4.93 19.07l2.83-2.83"></path><path d="M16.24 7.76l2.83-2.83"></path></svg> Procesando...`;
-                showStatusMessage('Procesando, por favor espera...', false);
-                resultsArea.style.display = 'none';
+                <div className="w-full flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <label htmlFor="file-upload" className="flex items-center px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-blue-600 transition-colors duration-300">
+                        <svg className="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Elegir Archivo .docx
+                    </label>
+                    <input id="file-upload" type="file" className="hidden" accept=".docx" onChange={handleFileChange} />
+                    <span className="text-gray-400 italic mt-2 md:mt-0">{uploadedFile ? uploadedFile.name : 'Ningún archivo seleccionado'}</span>
+                </div>
+
+                <div className="w-full">
+                    <label htmlFor="format-text" className="block text-lg font-semibold mb-2">Ingresa el texto a remover (opcional):</label>
+                    <textarea 
+                        id="format-text" 
+                        className="w-full p-4 bg-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        rows="3" 
+                        placeholder="Ej: Escribe 'Confidencial' para remover todos los párrafos que contengan esa palabra."
+                        value={formatText}
+                        onChange={(e) => setFormatText(e.target.value)}
+                    ></textarea>
+                </div>
+
+                <button 
+                    onClick={handleProcessClick}
+                    className="w-full md:w-1/2 p-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-lg transition-colors duration-300 transform active:scale-95 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                    disabled={isProcessing}
+                >
+                    {isProcessing ? (
+                        <>
+                            <svg className="w-6 h-6 inline-block mr-2 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M4.93 4.93l2.83 2.83"></path><path d="M16.24 16.24l2.83 2.83"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><path d="M4.93 19.07l2.83-2.83"></path><path d="M16.24 7.76l2.83-2.83"></path>
+                            </svg>
+                            Procesando...
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-6 h-6 inline-block mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 2L14 9l-7 7-5 5L2 19l5-5 7-7 7-7z"></path>
+                            </svg>
+                            Procesar Documento
+                        </>
+                    )}
+                </button>
+
+                {statusMessage && (
+                    <div className="w-full text-center">
+                        <p className={`text-lg font-medium p-4 rounded-lg ${isError ? 'bg-red-700 text-red-200' : isSuccess ? 'bg-green-700 text-green-200' : 'bg-yellow-700 text-yellow-200'}`}>
+                            {isError && (
+                                <svg className="w-6 h-6 inline-block mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
+                                </svg>
+                            )}
+                            {isSuccess && (
+                                <svg className="w-6 h-6 inline-block mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-8.66"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                            )}
+                            {statusMessage}
+                        </p>
+                    </div>
+                )}
                 
-                const formData = new FormData();
-                formData.append('file', uploadedFile);
-                formData.append('format_text', formatTextarea.value);
+                {htmlPreview && (
+                    <div className="w-full space-y-6">
+                        <div>
+                            <h2 className="text-2xl font-bold mb-4">Previsualización del Documento Procesado</h2>
+                            <div className="bg-gray-700 rounded-lg p-6 max-h-96 overflow-y-auto">
+                                <div dangerouslySetInnerHTML={{ __html: htmlPreview }} />
+                            </div>
+                        </div>
 
-                try {
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        body: formData
-                    });
+                        <div className="flex justify-center">
+                            <button 
+                                onClick={handleDownloadClick}
+                                className="px-10 py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg shadow-lg transition-colors duration-300 transform active:scale-95"
+                            >
+                                <svg className="w-6 h-6 inline-block mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Descargar Documento Procesado
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || 'Error desconocido del servidor.');
-                    }
-
-                    const result = await response.json();
-                    
-                    htmlPreview.innerHTML = result.html_content;
-                    docxBase64Textarea.value = result.docx_base64;
-                    
-                    showStatusMessage('¡Procesamiento completado!', false, true);
-                    resultsArea.style.display = 'flex';
-
-                } catch (error) {
-                    showStatusMessage(`Error: ${error.message}`, true);
-                } finally {
-                    processButton.disabled = false;
-                    processButton.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2L14 9l-7 7-5 5L2 19l5-5 7-7 7-7z"></path></svg> Procesar Documento`;
-                }
-            });
-
-            downloadButton.addEventListener('click', () => {
-                const docxBase64 = docxBase64Textarea.value;
-                if (!docxBase64) {
-                    showStatusMessage('No hay documento para descargar.', true);
-                    return;
-                }
-
-                try {
-                    const byteCharacters = atob(docxBase64);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) {
-                        byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    }
-                    const byteArray = new Uint8Array(byteNumbers);
-                    const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-
-                    const downloadUrl = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = 'documento_corregido.docx';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(downloadUrl);
-                    showStatusMessage('¡Descarga iniciada! Revisa tu carpeta de descargas.', false, true);
-                } catch (error) {
-                    showStatusMessage(`Error al descargar el archivo: ${error.message}`, true);
-                }
-            });
-
-            function showStatusMessage(message, isError = false, isSuccess = false) {
-                statusArea.style.display = 'block';
-                const statusElement = statusMessage.closest('.status-message');
-                statusElement.classList.remove('error', 'success');
-                if (isError) {
-                    statusElement.classList.add('error');
-                    statusMessage.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> ${message}`;
-                } else if (isSuccess) {
-                    statusElement.classList.add('success');
-                    statusMessage.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoi
+export default App;
